@@ -51,6 +51,10 @@ namespace server
                 app.UseHsts();
             }
 
+
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
             app.UseCors("CorsPolicy");
             app.UseHttpsRedirection();
             app.UseSignalR(routes =>
