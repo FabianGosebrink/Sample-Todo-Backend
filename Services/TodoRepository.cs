@@ -9,7 +9,7 @@ namespace server.Services
 {
     public interface ITodoRepository
     {
-        ICollection<TodoItem> GetAll();
+        IEnumerable<TodoItem> GetAll(bool? done);
         TodoItem GetSingle(Guid id);
         void Add(TodoItem item);
         TodoItem Update(Guid id, TodoItem item);
@@ -21,8 +21,12 @@ namespace server.Services
     {
         private ConcurrentDictionary<Guid, TodoItem> _store = new ConcurrentDictionary<Guid, TodoItem>();
 
-        public ICollection<TodoItem> GetAll()
+        public IEnumerable<TodoItem> GetAll(bool? done)
         {
+            if(done.HasValue)
+            {
+                return _store.Values.Where(x => x.Done == done.Value);
+            }
             return _store.Values;
         }
 

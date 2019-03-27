@@ -24,9 +24,9 @@ namespace server.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<TodoItem>> Get()
+        public ActionResult<IEnumerable<TodoItem>> Get(bool? done)
         {
-            return Ok(todoRepository.GetAll());
+            return Ok(todoRepository.GetAll(done));
         }
 
         [HttpGet("{id}")]
