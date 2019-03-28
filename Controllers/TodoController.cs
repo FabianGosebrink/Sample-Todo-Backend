@@ -60,7 +60,7 @@ namespace server.Controllers
         public ActionResult<TodoItem> Delete(Guid id)
         {
             todoRepository.Delete(id);
-
+            _todoHubContext.Clients.All.SendAsync("itemDeleted", id);
             return NoContent();
         }
     }
