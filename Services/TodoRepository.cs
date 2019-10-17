@@ -1,22 +1,11 @@
-﻿using server.Controllers;
+﻿using server.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace server.Services
 {
-    public interface ITodoRepository
-    {
-        IEnumerable<TodoItem> GetAll(bool? done);
-        TodoItem GetSingle(Guid id);
-        void Add(TodoItem item);
-        TodoItem Update(Guid id, TodoItem item);
-
-        void Delete(Guid id);
-    }
-
     public class TodoRepository : ITodoRepository
     {
         private ConcurrentDictionary<Guid, TodoItem> _store = new ConcurrentDictionary<Guid, TodoItem>();
