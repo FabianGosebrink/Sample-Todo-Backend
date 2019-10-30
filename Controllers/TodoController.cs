@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using server.Hubs;
 using server.Models;
-using server.Services;
+using server.Repositories;
 
 namespace server.Controllers
 {
@@ -13,52 +15,117 @@ namespace server.Controllers
     public class TodosController : ControllerBase
     {
         private readonly IHubContext<TodoHub> _todoHubContext;
-        private readonly ITodoRepository todoRepository;
+        private readonly ITodoRepository _todoRepository;
+        private readonly IMapper _mapper;
 
-        public TodosController(IHubContext<TodoHub> todoHubContext, ITodoRepository todoRepository)
+        public TodosController(
+            IHubContext<TodoHub> todoHubContext, 
+            ITodoRepository todoRepository,
+            IMapper mapper)
         {
             _todoHubContext = todoHubContext;
-            this.todoRepository = todoRepository;
+            _todoRepository = todoRepository;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<TodoItem>> Get(bool? done)
+        public ActionResult<IEnumerable<TodoDto>> Get(bool? done)
         {
-            return Ok(todoRepository.GetAll(done));
+            var items = _todoRepository.GetAll(done);
+            return Ok(items.Select(x => _mapper.Map<TodoDto>(x)));
         }
 
-        [HttpGet("{id}")]
-        public ActionResult<TodoItem> GetSingle(Guid id)
+        [HttpGet]
+        [Route("{id}", Name = nameof(GetSingle))]
+        public ActionResult<TodoDto> GetSingle(Guid id)
         {
-            return Ok(todoRepository.GetSingle(id));
+            TodoEntity entity = _todoRepository.GetSingle(id);
+
+            if (entity == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(_mapper.Map<TodoDto>(entity));
         }
 
-        [HttpPost]
-        public ActionResult<TodoItem> Post([FromBody] TodoItem todoItem)
+        [HttpPost(Name = nameof(AddTodo))]
+        public ActionResult AddTodo([FromBody] TodoCreateDto todoCreateDto)
         {
-            todoItem.Created = DateTime.Now;
-            todoRepository.Add(todoItem);
+            if (todoCreateDto == null)
+            {
+                return BadRequest();
+            }
 
-            _todoHubContext.Clients.All.SendAsync("itemAdded", todoItem);
+            TodoEntity item = _mapper.Map<TodoEntity>(todoCreateDto);
+            item.Created = DateTime.UtcNow;
+            TodoEntity newTodoEntity = _todoRepository.Add(item);
 
-            return Ok(todoItem);
+            if (!_todoRepository.Save())
+            {
+                throw new Exception("Adding an item failed on save.");
+            }
+
+            _todoHubContext.Clients.All.SendAsync("todo-added", newTodoEntity);
+
+            return CreatedAtRoute(
+                nameof(GetSingle),
+                new { id = newTodoEntity.Id },
+                _mapper.Map<TodoDto>(newTodoEntity));
         }
 
-        [HttpPut("{id}")]
-        public ActionResult<TodoItem> Put(Guid id, [FromBody] TodoItem todoItem)
+        [HttpPut]
+        [Route("{id}", Name = nameof(UpdateTodo))]
+        public ActionResult<TodoDto> UpdateTodo(Guid id, [FromBody] TodoUpdateDto updateDto)
         {
-            var newTodo = todoRepository.Update(id, todoItem);
+            if (updateDto == null)
+            {
+                return BadRequest();
+            }
 
-            _todoHubContext.Clients.All.SendAsync("itemUpdated", todoItem);
+            TodoEntity singleById = _todoRepository.GetSingle(id);
 
-            return Ok(newTodo);
+            if (singleById == null)
+            {
+                return NotFound();
+            }
+
+            _mapper.Map(updateDto, singleById);
+
+            TodoEntity updatedTodo = _todoRepository.Update(id, singleById);
+
+            if (!_todoRepository.Save())
+            {
+                throw new Exception("Updating an item failed on save.");
+            }
+
+            var updatedDto = _mapper.Map<TodoDto>(updatedTodo);
+
+            _todoHubContext.Clients.All.SendAsync("todo-updated", updatedDto);
+
+            return Ok(updatedDto);
         }
 
-        [HttpDelete("{id}")]
-        public ActionResult<TodoItem> Delete(Guid id)
+        [HttpDelete]
+        [Route("{id}", Name = nameof(DeleteFood))]
+        public ActionResult DeleteFood(Guid id)
         {
-            todoRepository.Delete(id);
-            _todoHubContext.Clients.All.SendAsync("itemDeleted", id);
+            TodoEntity singleById = _todoRepository.GetSingle(id);
+
+            if (singleById == null)
+            {
+                return NotFound();
+            }
+
+            _todoRepository.Delete(singleById);
+
+            if (!_todoRepository.Save())
+            {
+                throw new Exception("Deleting an item failed on save.");
+            }
+
+            _todoHubContext.Clients.All.SendAsync("todo-deleted");
+
             return NoContent();
         }
     }

@@ -5,8 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using server.Hubs;
-using server.Services;
 using Microsoft.OpenApi.Models;
+using server.Repositories;
+using Microsoft.EntityFrameworkCore;
+using server.Extensions;
 
 namespace server
 {
@@ -34,8 +36,12 @@ namespace server
                             .AllowAnyMethod();
                     });
             });
-            services.AddSingleton<ITodoRepository, TodoRepository>();
+
+            services.AddDbContext<TodoDbContext>(opt => opt.UseInMemoryDatabase("TodoDb"));
+
+            services.AddScoped<ITodoRepository, TodoRepository>();
             services.AddSignalR();
+            services.AddMappingProfiles();
 
             services.AddSwaggerGen(c =>
             {

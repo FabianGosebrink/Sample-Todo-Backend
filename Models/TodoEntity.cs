@@ -2,7 +2,7 @@
 
 namespace server.Models
 {
-    public class TodoItem
+    public class TodoEntity
     {
         public Guid Id { get; set; }
         public string Value { get; set; }
