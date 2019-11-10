@@ -35,6 +35,7 @@ namespace server.Repositories
             _todoDbContext.TodoItems.Update(item);
             return item;
         }
+
         public IEnumerable<TodoEntity> GetAll(bool? done)
         {
             if (done.HasValue)
