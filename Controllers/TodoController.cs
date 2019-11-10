@@ -107,8 +107,8 @@ namespace server.Controllers
         }
 
         [HttpDelete]
-        [Route("{id}", Name = nameof(DeleteFood))]
-        public ActionResult DeleteFood(Guid id)
+        [Route("{id}", Name = nameof(DeleteTodo))]
+        public ActionResult DeleteTodo(Guid id)
         {
             TodoEntity singleById = _todoRepository.GetSingle(id);
 
