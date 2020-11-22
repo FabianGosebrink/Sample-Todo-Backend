@@ -1,7 +1,8 @@
-﻿using server.Models;
+﻿using server.Extensions;
+using server.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 
 namespace server.Repositories
 {
@@ -36,13 +37,23 @@ namespace server.Repositories
             return item;
         }
 
-        public IEnumerable<TodoEntity> GetAll(bool? done)
+        public IQueryable<TodoEntity> GetAll(QueryParameters queryParameters)
         {
-            if (done.HasValue)
+            IQueryable<TodoEntity> _allItems = _todoDbContext.TodoItems.OrderBy(queryParameters.OrderBy, queryParameters.IsDescending());
+
+            if (queryParameters.Done.HasValue)
             {
-                return _todoDbContext.TodoItems.Where(x => x.Done == done.Value);
+                _allItems = _todoDbContext.TodoItems.Where(x => x.Done == queryParameters.Done.Value);
             }
-            return _todoDbContext.TodoItems;
+
+            if (queryParameters.HasQuery())
+            {
+                _allItems = _allItems.Where(x => x.Value.ToLowerInvariant().Contains(queryParameters.Query.ToLowerInvariant()));
+            }
+
+            return _allItems
+                .Skip(queryParameters.PageCount * (queryParameters.Page - 1))
+                .Take(queryParameters.PageCount);
         }
 
         public int Count()

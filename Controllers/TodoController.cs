@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using server.Extensions;
 using server.Hubs;
 using server.Models;
 using server.Repositories;
@@ -29,9 +31,22 @@ namespace server.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<TodoDto>> Get(bool? done)
+        public ActionResult<IEnumerable<TodoDto>> Get([FromQuery] QueryParameters queryParameters)
         {
-            var items = _todoRepository.GetAll(done);
+            var items = _todoRepository.GetAll(queryParameters);
+
+            var allItemCount = _todoRepository.Count();
+
+            var paginationMetadata = new
+            {
+                totalCount = allItemCount,
+                pageSize = queryParameters.PageCount,
+                currentPage = queryParameters.Page,
+                totalPages = queryParameters.GetTotalPages(allItemCount)
+            };
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
             return Ok(items.Select(x => _mapper.Map<TodoDto>(x)));
         }
 
