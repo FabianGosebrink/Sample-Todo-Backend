@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  AZURE_WEBAPP_NAME: sampletodobackend # set this to your application's name
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,3 +25,12 @@ jobs:
         run: dotnet build --configuration Release --no-restore
       - name: Test
         run: dotnet test --no-restore --verbosity normal
+      - name: dotnet publish
+        run: |
+          dotnet publish -c Release -o dotnetcorewebapp
+      - name: 'Deploy to Azure WebApp'
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: './dotnetcorewebapp'
