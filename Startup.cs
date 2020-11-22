@@ -9,6 +9,9 @@ using Microsoft.OpenApi.Models;
 using server.Repositories;
 using Microsoft.EntityFrameworkCore;
 using server.Extensions;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 namespace server
 {
@@ -34,14 +37,14 @@ namespace server
             services.AddSignalR();
             services.AddMappingProfiles();
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-            });
+            services.AddVersioning();
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
+            IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
             {
@@ -58,14 +61,20 @@ namespace server
             app.UseHttpsRedirection();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger(); 
+            app.UseSwagger();
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
             // specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-            });
+            app.UseSwaggerUI(
+                 options =>
+                 {
+                     foreach (var description in provider.ApiVersionDescriptions)
+                     {
+                         options.SwaggerEndpoint(
+                             $"/swagger/{description.GroupName}/swagger.json",
+                             description.GroupName.ToUpperInvariant());
+                     }
+                 });
 
             app.UseRouting();
             app.UseCors("AllowAllOrigins");

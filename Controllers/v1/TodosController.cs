@@ -10,9 +10,10 @@ using server.Hubs;
 using server.Models;
 using server.Repositories;
 
-namespace server.Controllers
+namespace server.Controllers.v1
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class TodosController : ControllerBase
     {
@@ -65,7 +66,7 @@ namespace server.Controllers
         }
 
         [HttpPost(Name = nameof(AddTodo))]
-        public ActionResult AddTodo([FromBody] TodoCreateDto todoCreateDto)
+        public ActionResult AddTodo(ApiVersion version, [FromBody] TodoCreateDto todoCreateDto)
         {
             if (todoCreateDto == null)
             {
@@ -85,7 +86,7 @@ namespace server.Controllers
 
             return CreatedAtRoute(
                 nameof(GetSingle),
-                new { id = newTodoEntity.Id },
+                new { version = version.ToString(), id = newTodoEntity.Id },
                 _mapper.Map<TodoDto>(newTodoEntity));
         }
 
