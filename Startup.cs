@@ -25,20 +25,11 @@ namespace server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-            services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAllOrigins",
-                    builder =>
-                    {
-                        builder
-                            .AllowAnyOrigin()
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
-                    });
-            });
+            services.AddCustomCors("AllowAllOrigins");
 
             services.AddDbContext<TodoDbContext>(opt => opt.UseInMemoryDatabase("TodoDb"));
 
+            services.AddRouting(config => config.LowercaseUrls = true);
             services.AddScoped<ITodoRepository, TodoRepository>();
             services.AddSignalR();
             services.AddMappingProfiles();
@@ -67,7 +58,7 @@ namespace server
             app.UseHttpsRedirection();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger();
+            app.UseSwagger(); 
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
             // specifying the Swagger JSON endpoint.
