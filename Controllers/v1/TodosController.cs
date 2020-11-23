@@ -106,6 +106,7 @@ namespace server.Controllers.v1
                 return NotFound();
             }
 
+            updateDto.Value = updateDto.Value ?? singleById.Value;
             _mapper.Map(updateDto, singleById);
 
             TodoEntity updatedTodo = _todoRepository.Update(id, singleById);
