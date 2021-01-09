@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -66,7 +67,7 @@ namespace server.Controllers.v1
         }
 
         [HttpPost(Name = nameof(AddTodo))]
-        public ActionResult AddTodo(ApiVersion version, [FromBody] TodoCreateDto todoCreateDto)
+        public async Task<ActionResult> AddTodo(ApiVersion version, [FromBody] TodoCreateDto todoCreateDto)
         {
             if (todoCreateDto == null)
             {
@@ -82,7 +83,7 @@ namespace server.Controllers.v1
                 throw new Exception("Adding an item failed on save.");
             }
 
-            _todoHubContext.Clients.All.SendAsync("todo-added", newTodoEntity);
+            await _todoHubContext.Clients.All.SendAsync("todo-added", newTodoEntity);
 
             return CreatedAtRoute(
                 nameof(GetSingle),
