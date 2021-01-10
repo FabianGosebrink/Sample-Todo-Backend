@@ -93,7 +93,7 @@ namespace server.Controllers.v1
 
         [HttpPut]
         [Route("{id}", Name = nameof(UpdateTodo))]
-        public ActionResult<TodoDto> UpdateTodo(Guid id, [FromBody] TodoUpdateDto updateDto)
+        public async Task<ActionResult<TodoDto>> UpdateTodo(Guid id, [FromBody] TodoUpdateDto updateDto)
         {
             if (updateDto == null)
             {
@@ -119,7 +119,7 @@ namespace server.Controllers.v1
 
             var updatedDto = _mapper.Map<TodoDto>(updatedTodo);
 
-            _todoHubContext.Clients.All.SendAsync("todo-updated", updatedDto);
+            await _todoHubContext.Clients.All.SendAsync("todo-updated", updatedDto);
 
             return Ok(updatedDto);
         }

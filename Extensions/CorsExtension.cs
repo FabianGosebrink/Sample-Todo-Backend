@@ -12,8 +12,8 @@ namespace server.Extensions
                     builder =>
                     {
                         builder
-                            .AllowAnyOrigin()
                             .AllowAnyHeader()
+                            .AllowAnyMethod()
                             .WithOrigins("http://localhost:4200")
                             .AllowCredentials();
                     });
