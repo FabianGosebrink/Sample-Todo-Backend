@@ -84,7 +84,7 @@ namespace server.Controllers.v1
             }
 
             await _todoHubContext.Clients.All.SendAsync("todo-added", newTodoEntity);
-
+            
             return CreatedAtRoute(
                 nameof(GetSingle),
                 new { version = version.ToString(), id = newTodoEntity.Id },
@@ -142,7 +142,7 @@ namespace server.Controllers.v1
                 throw new Exception("Deleting an item failed on save.");
             }
 
-            _todoHubContext.Clients.All.SendAsync("todo-deleted");
+            _todoHubContext.Clients.All.SendAsync("todo-deleted", id);
 
             return NoContent();
         }
